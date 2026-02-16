@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <title>SaaS HRM</title>
+    <style>
+      /* ═══════ THEME VARIABLES — in HTML to bypass PostCSS resolution ═══════ */
+      :root {
+        --color-surface-bg: 248 250 252;
+        --color-surface-card: 255 255 255;
+        --color-surface-border: 226 232 240;
+        --color-content-primary: 15 23 42;
+        --color-content-secondary: 71 85 105;
+        --color-content-muted: 148 163 184;
+        --color-sidebar-bg: 255 255 255;
+        --color-sidebar-hover: 248 250 252;
+        --color-sidebar-active: 240 253 244;
+        --color-sidebar-border: 226 232 240;
+        --color-sidebar-text: 71 85 105;
+        --color-sidebar-textHover: 15 23 42;
+        --color-sidebar-textActive: 22 163 74;
+        --color-sidebar-accent: 22 163 74;
+        --color-header-bg: 255 255 255;
+        --color-header-border: 226 232 240;
+        --color-primary-50: 236 253 245;
+        --color-primary-100: 209 250 229;
+        --color-danger-50: 254 242 242;
+        --shadow-card: 0 1px 3px rgba(0,0,0,0.05);
+        --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.08);
+        --color-card-bg: 255 255 255;
+        --color-card-border: 226 232 240;
+        --color-input-bg: 255 255 255;
+        --color-input-border: 226 232 240;
+        --color-input-text: 15 23 42;
+        --color-input-placeholder: 148 163 184;
+        --color-label: 71 85 105;
+        --color-btn-secondary-bg: 255 255 255;
+        --color-btn-secondary-text: 15 23 42;
+        --color-btn-secondary-border: 226 232 240;
+        --color-btn-secondary-hover: 248 250 252;
+        --color-table-header: 148 163 184;
+        --color-table-cell: 71 85 105;
+        --color-badge-gray-bg: 241 245 249;
+        --color-badge-gray-text: 71 85 105;
+        --color-connector: 209 213 219;
+        --color-icon-muted: 156 163 175;
+        --color-disabled-bg: 248 250 252;
+      }
+      .dark {
+        --color-surface-bg: 15 23 42;
+        --color-surface-card: 30 41 59;
+        --color-surface-border: 51 65 85;
+        --color-content-primary: 241 245 249;
+        --color-content-secondary: 203 213 225;
+        --color-content-muted: 100 116 139;
+        --color-sidebar-bg: 30 41 59;
+        --color-sidebar-hover: 51 65 85;
+        --color-sidebar-active: 20 83 45;
+        --color-sidebar-border: 51 65 85;
+        --color-sidebar-text: 148 163 184;
+        --color-sidebar-textHover: 241 245 249;
+        --color-sidebar-textActive: 74 222 128;
+        --color-sidebar-accent: 74 222 128;
+        --color-header-bg: 30 41 59;
+        --color-header-border: 51 65 85;
+        --color-primary-50: 6 78 59;
+        --color-primary-100: 6 78 59;
+        --color-danger-50: 69 10 10;
+        --shadow-card: 0 1px 3px rgba(0,0,0,0.3);
+        --shadow-card-hover: 0 4px 12px rgba(0,0,0,0.4);
+        --color-card-bg: 30 41 59;
+        --color-card-border: 51 65 85;
+        --color-input-bg: 15 23 42;
+        --color-input-border: 51 65 85;
+        --color-input-text: 241 245 249;
+        --color-input-placeholder: 100 116 139;
+        --color-label: 203 213 225;
+        --color-btn-secondary-bg: 30 41 59;
+        --color-btn-secondary-text: 241 245 249;
+        --color-btn-secondary-border: 51 65 85;
+        --color-btn-secondary-hover: 51 65 85;
+        --color-table-header: 100 116 139;
+        --color-table-cell: 203 213 225;
+        --color-badge-gray-bg: 51 65 85;
+        --color-badge-gray-text: 203 213 225;
+        --color-connector: 75 85 99;
+        --color-icon-muted: 100 116 139;
+        --color-disabled-bg: 30 41 59;
+      }
+    </style>
+  </head>
+  <body class="font-sans antialiased">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

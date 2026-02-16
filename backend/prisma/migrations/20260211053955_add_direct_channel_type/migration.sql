@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `chat_channels` MODIFY `type` ENUM('PUBLIC', 'PRIVATE', 'DIRECT') NOT NULL DEFAULT 'PUBLIC';

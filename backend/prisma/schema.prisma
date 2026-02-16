@@ -1,0 +1,354 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── COMPANY ────────────────────────────────────────────────────────────────────
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String   @db.VarChar(200)
+  domain    String?  @db.VarChar(200)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  logo      CompanyLogo?
+  users     User[]
+  employees Employee[]
+  channels  ChatChannel[]
+  holidays  Holiday[]
+
+  @@map("companies")
+}
+
+model CompanyLogo {
+  id        String   @id @default(uuid())
+  companyId String   @unique @map("company_id")
+  url       String   @db.VarChar(500)
+  blobName  String   @map("blob_name") @db.VarChar(500)
+  fileName  String   @map("file_name") @db.VarChar(255)
+  fileSize  Int      @map("file_size")
+  mimeType  String   @map("mime_type") @db.VarChar(50)
+  uploadedAt DateTime @default(now()) @map("uploaded_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_logos")
+}
+
+// ─── AUTH / USERS ───────────────────────────────────────────────────────────────
+
+enum Role {
+  EMPLOYEE
+  TEAM_LEAD
+  MANAGER
+  HR
+  ADMIN
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique @db.VarChar(255)
+  password     String   @db.VarChar(255)
+  role         Role     @default(EMPLOYEE)
+  isActive     Boolean  @default(true) @map("is_active")
+  customStatus String?  @map("custom_status") @db.VarChar(50)
+  companyId    String   @map("company_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  company   Company   @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  employee  Employee?
+
+  sentMessages     ChatMessage[]     @relation("MessageSender")
+  channelMembers   ChannelMember[]
+  leaveApprovals   LeaveApproval[]
+
+  @@index([companyId])
+  @@index([email])
+  @@map("users")
+}
+
+// ─── EMPLOYEE ───────────────────────────────────────────────────────────────────
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERN
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  ON_LEAVE
+  TERMINATED
+}
+
+model Employee {
+  id             String         @id @default(uuid())
+  employeeCode   String         @unique @map("employee_code") @db.VarChar(20)
+  fullName       String         @map("full_name") @db.VarChar(200)
+  email          String         @unique @db.VarChar(255)
+  phone          String?        @db.VarChar(20)
+  profilePhoto   String?        @map("profile_photo") @db.VarChar(500)
+  department     String         @db.VarChar(100)
+  designation    String         @db.VarChar(100)
+  managerId      String?        @map("manager_id")
+  dateOfJoining  DateTime       @map("date_of_joining")
+  employmentType EmploymentType @default(FULL_TIME) @map("employment_type")
+  salary         Decimal        @db.Decimal(12, 2)
+  workLocation   String         @map("work_location") @db.VarChar(200)
+  status         EmployeeStatus @default(ACTIVE)
+  companyId      String         @map("company_id")
+  userId         String         @unique @map("user_id")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  company       Company          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  manager       Employee?        @relation("ManagerRelation", fields: [managerId], references: [id])
+  subordinates  Employee[]       @relation("ManagerRelation")
+  attendances   Attendance[]
+  leaves        Leave[]
+  leaveBalances LeaveBalance[]
+  payrolls      Payroll[]
+
+  @@index([companyId])
+  @@index([department])
+  @@index([managerId])
+  @@index([status])
+  @@map("employees")
+}
+
+// ─── ATTENDANCE ─────────────────────────────────────────────────────────────────
+
+model Attendance {
+  id         String    @id @default(uuid())
+  employeeId String    @map("employee_id")
+  date       DateTime  @db.Date
+  loginTime  DateTime  @map("login_time")
+  logoutTime DateTime? @map("logout_time")
+  totalHours Decimal?  @map("total_hours") @db.Decimal(5, 2)
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+  @@index([date])
+  @@map("attendances")
+}
+
+// ─── LEAVE ──────────────────────────────────────────────────────────────────────
+
+enum LeaveType {
+  CASUAL
+  SICK
+  EARNED
+  UNPAID
+}
+
+enum LeaveStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ApprovalAction {
+  APPROVED
+  REJECTED
+}
+
+model Leave {
+  id         String      @id @default(uuid())
+  employeeId String      @map("employee_id")
+  leaveType  LeaveType   @map("leave_type")
+  startDate  DateTime    @map("start_date") @db.Date
+  endDate    DateTime    @map("end_date") @db.Date
+  totalDays  Int         @map("total_days")
+  reason     String      @db.Text
+  status     LeaveStatus @default(PENDING)
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updatedAt  DateTime    @updatedAt @map("updated_at")
+
+  employee  Employee        @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  approvals LeaveApproval[]
+
+  @@index([employeeId])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@map("leaves")
+}
+
+model LeaveApproval {
+  id         String         @id @default(uuid())
+  leaveId    String         @map("leave_id")
+  approverId String         @map("approver_id")
+  role       Role
+  action     ApprovalAction
+  comment    String?        @db.Text
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  leave    Leave @relation(fields: [leaveId], references: [id], onDelete: Cascade)
+  approver User  @relation(fields: [approverId], references: [id])
+
+  @@index([leaveId])
+  @@index([approverId])
+  @@map("leave_approvals")
+}
+
+model LeaveBalance {
+  id         String    @id @default(uuid())
+  employeeId String    @map("employee_id")
+  leaveType  LeaveType @map("leave_type")
+  year       Int
+  total      Int       @default(0)
+  used       Int       @default(0)
+  remaining  Int       @default(0)
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, leaveType, year])
+  @@index([employeeId])
+  @@map("leave_balances")
+}
+
+// ─── HOLIDAYS ──────────────────────────────────────────────────────────────────
+
+enum HolidayType {
+  NATIONAL
+  COMPANY
+  REGIONAL
+}
+
+model Holiday {
+  id          String      @id @default(uuid())
+  companyId   String      @map("company_id")
+  name        String      @db.VarChar(200)
+  date        DateTime    @db.Date
+  type        HolidayType @default(COMPANY)
+  description String?     @db.VarChar(500)
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@unique([companyId, date, name])
+  @@index([companyId])
+  @@index([date])
+  @@map("holidays")
+}
+
+// ─── PAYROLL ────────────────────────────────────────────────────────────────────
+
+model Payroll {
+  id               String   @id @default(uuid())
+  employeeId       String   @map("employee_id")
+  month            Int
+  year             Int
+  basicSalary      Decimal  @map("basic_salary") @db.Decimal(12, 2)
+  hra              Decimal  @db.Decimal(12, 2)
+  allowances       Decimal  @db.Decimal(12, 2)
+  grossEarnings    Decimal  @map("gross_earnings") @db.Decimal(12, 2)
+  pf               Decimal  @db.Decimal(12, 2)
+  tax              Decimal  @db.Decimal(12, 2)
+  leaveDeduction   Decimal  @map("leave_deduction") @db.Decimal(12, 2)
+  otherDeductions  Decimal  @map("other_deductions") @db.Decimal(12, 2)
+  totalDeductions  Decimal  @map("total_deductions") @db.Decimal(12, 2)
+  netSalary        Decimal  @map("net_salary") @db.Decimal(12, 2)
+  generatedAt      DateTime @default(now()) @map("generated_at")
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, month, year])
+  @@index([employeeId])
+  @@index([month, year])
+  @@map("payrolls")
+}
+
+// ─── CHAT ───────────────────────────────────────────────────────────────────────
+
+enum ChannelType {
+  PUBLIC
+  PRIVATE
+  DIRECT
+}
+
+model ChatChannel {
+  id          String      @id @default(uuid())
+  name        String      @db.VarChar(100)
+  description String?     @db.VarChar(500)
+  type        ChannelType @default(PUBLIC)
+  companyId   String      @map("company_id")
+  createdById String      @map("created_by_id")
+  createdAt   DateTime    @default(now()) @map("created_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+
+  company  Company         @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  members  ChannelMember[]
+  messages ChatMessage[]
+
+  @@index([companyId])
+  @@map("chat_channels")
+}
+
+model ChannelMember {
+  id        String   @id @default(uuid())
+  channelId String   @map("channel_id")
+  userId    String   @map("user_id")
+  joinedAt  DateTime @default(now()) @map("joined_at")
+  lastReadAt DateTime? @map("last_read_at")
+
+  channel ChatChannel @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([channelId, userId])
+  @@index([channelId])
+  @@index([userId])
+  @@map("channel_members")
+}
+
+model ChatMessage {
+  id        String   @id @default(uuid())
+  channelId String   @map("channel_id")
+  senderId  String   @map("sender_id")
+  content   String   @db.Text
+  isPinned  Boolean  @default(false) @map("is_pinned")
+  replyToId String?  @map("reply_to_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  channel  ChatChannel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  sender   User         @relation("MessageSender", fields: [senderId], references: [id])
+  replyTo  ChatMessage? @relation("MessageReplies", fields: [replyToId], references: [id], onDelete: SetNull)
+  replies  ChatMessage[] @relation("MessageReplies")
+  files    ChatFile[]
+
+  @@index([channelId])
+  @@index([senderId])
+  @@index([replyToId])
+  @@index([createdAt])
+  @@map("chat_messages")
+}
+
+model ChatFile {
+  id        String   @id @default(uuid())
+  messageId String   @map("message_id")
+  url       String   @db.VarChar(500)
+  blobName  String   @map("blob_name") @db.VarChar(500)
+  fileName  String   @map("file_name") @db.VarChar(255)
+  fileSize  Int      @map("file_size")
+  mimeType  String   @map("mime_type") @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  message ChatMessage @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("chat_files")
+}
